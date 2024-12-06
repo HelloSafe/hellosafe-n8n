@@ -4,9 +4,7 @@ import {
   INodeType,
   INodeTypeDescription,
 } from "n8n-workflow";
-import { loadSpeadsheetInfo } from "../../srcs/utils/accessSpreadsheet";
-import { parseInput } from "./parseInput";
-import { prepareOutput } from "./prepareOutput";
+import Pipeline from "./Pipeline";
 
 export class MortgageCH implements INodeType {
   description: INodeTypeDescription = {
@@ -36,21 +34,15 @@ export class MortgageCH implements INodeType {
   };
 
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-    // Taking the input
-    const inputs = this.getInputData()[0]?.json.body as any;
+    // We get the inputs and set in the good format
+    const rawInputs = this.getInputData()[0]?.json.body as any;
     const outputList = (this.getNodeParameter("output", 0) as string).split(
       ", "
     );
-    const parsedInput = parseInput(inputs);
 
-    const spreadSheet = await loadSpeadsheetInfo(
-      "165q46QsJ__i43jBUn0nw3EHN4Ofrr2X-NpeMsfA2fBY",
-      ["Rates!A:Z"]
-    );
+    const pipeline = new Pipeline();
+    const outputItems = await pipeline.execute(rawInputs, outputList);
 
-    const matchingRows = spreadSheet["Rates!A:Z"];
-    const processedData = { ...parsedInput, matchingRows: matchingRows };
-    const outputItems = prepareOutput(processedData, outputList);
     return this.prepareOutputData(outputItems);
   }
 }
