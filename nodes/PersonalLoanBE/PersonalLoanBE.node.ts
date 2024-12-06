@@ -4,9 +4,7 @@ import {
   INodeType,
   INodeTypeDescription,
 } from "n8n-workflow";
-import { parseInput } from "./parseInput";
-import { processData } from "./processData";
-import { prepareOutput } from "./prepareOutput";
+import Pipeline from "./Pipeline";
 
 export class PersonalLoanBE implements INodeType {
   description: INodeTypeDescription = {
@@ -36,17 +34,13 @@ export class PersonalLoanBE implements INodeType {
   };
 
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-    const inputs = this.getInputData()[0]?.json.body as any;
+    const rawInputs = this.getInputData()[0]?.json.body as any;
     const outputList = (this.getNodeParameter("output", 0) as string).split(
       ", "
     );
-    const parsedInput = parseInput(inputs);
 
-    const processedData = await processData(parsedInput, null);
-
-    const outputItems = prepareOutput(processedData, outputList);
-
-
+    const pipeline = new Pipeline();
+    const outputItems = await pipeline.execute(rawInputs, outputList);
 
     return this.prepareOutputData(outputItems);
   }
